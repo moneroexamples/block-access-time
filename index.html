@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Monero Examples by moneroexamples</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Monero Examples</h1>
+      <h2 class="project-tagline">block-access-time</h2>
+      <a href="https://github.com/moneroexamples/block-access-time" class="btn">View on GitHub</a>
+      <a href="https://github.com/moneroexamples/block-access-time/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/moneroexamples/block-access-time/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="measure-block-access-time" class="anchor" href="#measure-block-access-time" aria-hidden="true"><span class="octicon octicon-link"></span></a>Measure block access time</h1>
+
+<p>While working on another example, I've noticed that access time to some
+monero blocks, especially early ones, using <code>Blockchain::get_block_by_hash</code>,
+is very long. Thus, I wanted check this for all blocks  blockchain.</p>
+
+<p>As a result of this, this example was created showing how to loop through all
+blocks in lmdb blockchain, and save some basic information from the blocks,
+as well as measure access time, into an output csv file.</p>
+
+<h2>
+<a id="pre-requisites" class="anchor" href="#pre-requisites" aria-hidden="true"><span class="octicon octicon-link"></span></a>Pre-requisites</h2>
+
+<p>Everything here was done and tested on
+Ubuntu 14.04 x86_64 and Ubuntu 15.10 x86_64.</p>
+
+<p>Monero source code compilation and setup are same as <a href="http://moneroexamples.github.io/access-blockchain-in-cpp/">here</a>.</p>
+
+<h2>
+<a id="c-maincpp" class="anchor" href="#c-maincpp" aria-hidden="true"><span class="octicon octicon-link"></span></a>C++: main.cpp</h2>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">int</span> <span class="pl-en">main</span>(<span class="pl-k">int</span> ac, <span class="pl-k">const</span> <span class="pl-k">char</span>* av[]) {
+
+    <span class="pl-c">// get command line options</span>
+    xmreg::CmdLineOptions opts {ac, av};
+
+    <span class="pl-k">auto</span> help_opt = opts.<span class="pl-smi">get_option</span>&lt;<span class="pl-k">bool</span>&gt;(<span class="pl-s"><span class="pl-pds">"</span>help<span class="pl-pds">"</span></span>);
+
+    <span class="pl-c">// if help was chosen, display help text and finish</span>
+    <span class="pl-k">if</span> (*help_opt)
+    {
+        <span class="pl-k">return</span> <span class="pl-c1">0</span>;
+    }
+
+    <span class="pl-c">// get other options</span>
+    <span class="pl-k">auto</span> start_height_opt = opts.<span class="pl-smi">get_option</span>&lt;<span class="pl-c1">size_t</span>&gt;(<span class="pl-s"><span class="pl-pds">"</span>start-height<span class="pl-pds">"</span></span>);
+    <span class="pl-k">auto</span> out_csv_file_opt = opts.<span class="pl-smi">get_option</span>&lt;string&gt;(<span class="pl-s"><span class="pl-pds">"</span>out-csv-file<span class="pl-pds">"</span></span>);
+    <span class="pl-k">auto</span> bc_path_opt      = opts.<span class="pl-smi">get_option</span>&lt;string&gt;(<span class="pl-s"><span class="pl-pds">"</span>bc-path<span class="pl-pds">"</span></span>);
+
+
+    <span class="pl-c">// default path to monero folder</span>
+    <span class="pl-c">// on linux this is /home/&lt;username&gt;/.bitmonero</span>
+    string default_monero_dir = <span class="pl-c1">tools::get_default_data_dir</span>();
+
+    <span class="pl-c">// the default folder of the lmdb blockchain database</span>
+    <span class="pl-c">// is therefore as follows</span>
+    string default_lmdb_dir   = default_monero_dir + <span class="pl-s"><span class="pl-pds">"</span>/lmdb<span class="pl-pds">"</span></span>;
+
+    <span class="pl-c">// get the program command line options, or</span>
+    <span class="pl-c">// some default values for quick check</span>
+    <span class="pl-c1">size_t</span> start_height  = start_height_opt ? *start_height_opt : <span class="pl-c1">0</span>;
+    string out_csv_file  = out_csv_file_opt ? *out_csv_file_opt : <span class="pl-s"><span class="pl-pds">"</span>/tmp/block_access_time.csv<span class="pl-pds">"</span></span>;
+    path blockchain_path = bc_path_opt ? <span class="pl-c1">path</span>(*bc_path_opt) : <span class="pl-c1">path</span>(default_lmdb_dir);
+
+
+    <span class="pl-k">if</span> (!<span class="pl-c1">is_directory</span>(blockchain_path))
+    {
+        cerr &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Given path <span class="pl-cce">\"</span><span class="pl-pds">"</span></span> &lt;&lt; blockchain_path   &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\"</span> <span class="pl-pds">"</span></span>
+             &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>is not a folder or does not exist<span class="pl-pds">"</span></span> &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span> <span class="pl-pds">"</span></span>
+             &lt;&lt; endl;
+        <span class="pl-k">return</span> <span class="pl-c1">1</span>;
+    }
+
+    blockchain_path = <span class="pl-c1">xmreg::remove_trailing_path_separator</span>(blockchain_path);
+
+    cout &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Blockchain path: <span class="pl-pds">"</span></span> &lt;&lt; blockchain_path &lt;&lt; endl;
+
+    <span class="pl-c">// enable basic monero log output</span>
+    <span class="pl-c1">uint32_t</span> log_level = <span class="pl-c1">0</span>;
+    <span class="pl-c1">epee::log_space::get_set_log_detalisation_level</span>(<span class="pl-c1">true</span>, log_level);
+    <span class="pl-c1">epee::log_space::log_singletone::add_logger</span>(LOGGER_CONSOLE, <span class="pl-c1">NULL</span>, <span class="pl-c1">NULL</span>);
+
+
+    <span class="pl-c">// create instance of our MicroCore</span>
+    xmreg::MicroCore mcore;
+
+    <span class="pl-c">// initialize the core using the blockchain path</span>
+    <span class="pl-k">if</span> (!mcore.<span class="pl-c1">init</span>(blockchain_path.<span class="pl-c1">string</span>()))
+    {
+        cerr &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Error accessing blockchain.<span class="pl-pds">"</span></span> &lt;&lt; endl;
+        <span class="pl-k">return</span> <span class="pl-c1">1</span>;
+    }
+
+    <span class="pl-c">// get the highlevel cryptonote::Blockchain object to interact</span>
+    <span class="pl-c">// with the blockchain lmdb database</span>
+    cryptonote::Blockchain&amp; core_storage = mcore.<span class="pl-c1">get_core</span>();
+
+    <span class="pl-c">// get the current blockchain height. Just to check</span>
+    <span class="pl-c">// if it reads ok.</span>
+    <span class="pl-c1">uint64_t</span> height = core_storage.<span class="pl-c1">get_current_blockchain_height</span>();
+
+    <span class="pl-k">if</span> (start_height &gt; height)
+    {
+        cerr &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Given height is greater than blockchain height<span class="pl-pds">"</span></span> &lt;&lt; endl;
+        <span class="pl-k">return</span> <span class="pl-c1">1</span>;
+    }
+
+
+    cout &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Current blockchain height: <span class="pl-pds">"</span></span> &lt;&lt; height &lt;&lt; endl;
+
+
+    <span class="pl-c">// output csv file</span>
+    csv::ofstream csv_os {out_csv_file.<span class="pl-c1">c_str</span>()};
+
+    <span class="pl-k">if</span> (!csv_os.<span class="pl-c1">is_open</span>())
+    {
+        cerr &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Cant open file: <span class="pl-pds">"</span></span> &lt;&lt; out_csv_file &lt;&lt; endl;
+        <span class="pl-k">return</span> <span class="pl-c1">1</span>;
+    }
+
+    cout &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Csv file: <span class="pl-pds">"</span></span> &lt;&lt;  out_csv_file &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span> opened for wrting results.<span class="pl-pds">"</span></span> &lt;&lt; endl;
+
+    <span class="pl-c">// write csv header</span>
+    csv_os &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Height<span class="pl-pds">"</span></span> &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Timestamp<span class="pl-pds">"</span></span> &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Access_time<span class="pl-pds">"</span></span> &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Size<span class="pl-pds">"</span></span>
+           &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Hash<span class="pl-pds">"</span></span> &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>No_tx<span class="pl-pds">"</span></span> &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Reward<span class="pl-pds">"</span></span> &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Dificulty<span class="pl-pds">"</span></span> &lt;&lt; NEWLINE;
+
+    <span class="pl-c">// show command line output for everth i-th block</span>
+    <span class="pl-k">const</span> <span class="pl-c1">uint64_t</span> EVERY_ith_BLOCK {<span class="pl-c1">2000</span>};
+
+    <span class="pl-k">for</span> (<span class="pl-c1">uint64_t</span> i = start_height; i &lt; height; ++i) {
+
+        <span class="pl-c">// show every nth output, just to give</span>
+        <span class="pl-c">// a console some break</span>
+        <span class="pl-k">if</span> (i % EVERY_ith_BLOCK == <span class="pl-c1">0</span>)
+            cout &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Analysing block <span class="pl-pds">"</span></span> &lt;&lt; i &lt;&lt;  <span class="pl-s"><span class="pl-pds">"</span>/<span class="pl-pds">"</span></span> &lt;&lt; height &lt;&lt; endl;
+
+
+
+        crypto::hash block_id;
+
+        <span class="pl-k">try</span>
+        {
+            <span class="pl-c">// get block hash to be used to for the search</span>
+            <span class="pl-c">// in the next step</span>
+            block_id = core_storage.<span class="pl-c1">get_block_id_by_height</span>(i);
+        }
+        <span class="pl-k">catch</span> (<span class="pl-k">const</span> exception&amp; e)
+        {
+            cerr &lt;&lt; e.<span class="pl-c1">what</span>() &lt;&lt; endl;
+            <span class="pl-k">continue</span>;
+        }
+
+
+        cryptonote::block blk;
+
+        <span class="pl-k">try</span>
+        {
+            <span class="pl-c">// measure time of accessing ith block from the blockchain</span>
+            <span class="pl-k">auto</span> start = <span class="pl-c1">chrono::system_clock::now</span>();
+            <span class="pl-c">//blk = core_storage.get_db().get_block_from_height(i); // &lt;-- alternative, faster</span>
+            core_storage.<span class="pl-c1">get_block_by_hash</span>(block_id, blk);
+            <span class="pl-k">auto</span> duration = chrono::duration_cast&lt;chrono::nanoseconds&gt;(<span class="pl-c1">chrono::system_clock::now</span>() - start);
+
+            <span class="pl-c">// get block size</span>
+            <span class="pl-c1">size_t</span> blk_size = core_storage.<span class="pl-c1">get_db</span>().<span class="pl-c1">get_block_size</span>(i);
+
+            <span class="pl-k">if</span> (i % EVERY_ith_BLOCK == <span class="pl-c1">0</span>)
+                cout &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span> - <span class="pl-pds">"</span></span> &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>access time: <span class="pl-pds">"</span></span> &lt;&lt; duration.<span class="pl-c1">count</span>() &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span> ns.<span class="pl-pds">"</span></span> &lt;&lt; endl;
+
+            <span class="pl-c">// save measured data to the output csv file</span>
+            csv_os &lt;&lt; i &lt;&lt; <span class="pl-c1">xmreg::timestamp_to_str</span>(blk.<span class="pl-smi">timestamp</span>)
+                   &lt;&lt; duration.<span class="pl-c1">count</span>() &lt;&lt; blk_size
+                   &lt;&lt; core_storage.<span class="pl-c1">get_block_id_by_height</span>(i)
+                   &lt;&lt; blk.<span class="pl-smi">tx_hashes</span>.<span class="pl-c1">size</span>()
+                   &lt;&lt; <span class="pl-c1">cryptonote::print_money</span>(mcore.<span class="pl-c1">get_block_reward</span>(blk))
+                   &lt;&lt; core_storage.<span class="pl-c1">get_db</span>().<span class="pl-c1">get_block_difficulty</span>(i)
+                   &lt;&lt; NEWLINE;
+        }
+        <span class="pl-k">catch</span> (<span class="pl-k">const</span> exception&amp; e)
+        {
+            cerr &lt;&lt; e.<span class="pl-c1">what</span>() &lt;&lt; endl;
+            <span class="pl-k">continue</span>;
+        }
+
+
+    } <span class="pl-c">// for (uint64_t i = 0; i &lt; height; ++i)</span>
+
+
+    <span class="pl-c">// colose the output csv file</span>
+    csv_os.<span class="pl-c1">flush</span>();
+    csv_os.<span class="pl-c1">close</span>();
+
+    cout &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span>Csv saved as: <span class="pl-pds">"</span></span> &lt;&lt; out_csv_file &lt;&lt; endl;
+
+    cout &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span>End of program.<span class="pl-pds">"</span></span> &lt;&lt; endl;
+
+    <span class="pl-k">return</span> <span class="pl-c1">0</span>;
+}```
+
+## Results
+
+- The resulted csv file can be seen [here](https:<span class="pl-c">//mega.nz/#!P4cWWTLK!Eb5m4q4f5Tx-5p5FNMwF7cv0ckvPTX5Hy5fqGn7VFm4).</span>
+
+- The plot of log of block access time against block number is [here](http:<span class="pl-c">//i.imgur.com/2xmAF0c.png).</span>
+
+From the csv <span class="pl-k">and</span> data, it can be seen that there is very large
+concentration of very <span class="pl-k">long</span> times up to block of about 100k. This
+results in very slow recovery of your deterministic wallet, when
+the blocks in <span class="pl-v">this</span> range are being scanned <span class="pl-k">for</span> your transactions.
+
+
+## Compile <span class="pl-v">this</span> example
+The dependencies are same as those <span class="pl-k">for</span> Monero, so I assume Monero compiles
+correctly. If so then to download <span class="pl-k">and</span> compile <span class="pl-v">this</span> example, the following
+steps can be executed:
+
+```bash
+# download the source code
+git clone https:<span class="pl-c">//github.com/moneroexamples/block-access-time</span>
+
+# enter the downloaded sourced code folder
+cd block-access-time
+
+# create the makefile
+cmake .
+
+# compile
+make</pre></div>
+
+<p>After this, <code>blkaccesstime</code> executable file should be present in access-blockchain-in-cpp
+folder. How to use it, can be seen in the above example outputs.</p>
+
+<h2>
+<a id="how-can-you-help" class="anchor" href="#how-can-you-help" aria-hidden="true"><span class="octicon octicon-link"></span></a>How can you help?</h2>
+
+<p>Constructive criticism, code and website edits are always good. They can be made through github.</p>
+
+<p>Some Monero are also welcome:</p>
+
+<pre><code>48daf1rG3hE1Txapcsxh6WXNe9MLNKtu7W7tKTivtSoVLHErYzvdcpea2nSTgGkz66RFP4GKVAsTV14v6G3oddBTHfxP6tU
+</code></pre>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/moneroexamples/block-access-time">Monero Examples</a> is maintained by <a href="https://github.com/moneroexamples">moneroexamples</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
