@@ -21,7 +21,7 @@ namespace xmreg
         desc.add_options()
                 ("help,h", value<bool>()->default_value(false)->implicit_value(true),
                  "produce help message")
-                ("start-height,t", value<size_t>(),
+                ("start-height,s", value<size_t>(),
                  "private view key string")
                 ("out-csv-file,c", value<string>(),
                  "private view key string")
