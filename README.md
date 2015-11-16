@@ -129,6 +129,8 @@ int main(int ac, const char* av[]) {
 
         try
         {
+            // get block hash to be used to for the search
+            // in the next step
             block_id = core_storage.get_block_id_by_height(i);
         }
         catch (const exception& e)
@@ -186,9 +188,9 @@ int main(int ac, const char* av[]) {
 
 ## Results
 
-- The resulted csv file can be seen [here].
+- The resulted csv file can be seen [here](https://mega.nz/#!P4cWWTLK!Eb5m4q4f5Tx-5p5FNMwF7cv0ckvPTX5Hy5fqGn7VFm4).
 
-- The plot of log of block access time against block number is [here].
+- The plot of log of block access time against block number is [here](http://i.imgur.com/2xmAF0c.png).
 
 From the csv and data, it can be seen that there is very large
 concentration of very long times up to block of about 100k. This
