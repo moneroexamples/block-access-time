@@ -1,16 +1,21 @@
 # Measure block access time
 While working on another example, I've noticed that access time to some
 monero blocks, especially early ones, using `Blockchain::get_block_by_hash`,
-is very long. Thus, I wanted check this for all blocks  blockchain.
+is very long. Thus, I wanted check this time for all blocks in the blockchain.
 
 As a result of this, this example was created showing how to loop through all
-blocks in lmdb blockchain, and save some basic information from the blocks,
-as well as measure access time, into an output csv file.
+blocks in lmdb blockchain, and extract some basic information about each block,
+as well as measure its access/search time, into an output csv file.
 
 ## Pre-requisites
 
 Everything here was done and tested on
 Ubuntu 14.04 x86_64 and Ubuntu 15.10 x86_64.
+
+Instruction for Monero compilation:
+ - [Ubuntu 14.04 x86_64](http://moneroexamples.github.io/compile-monero-ubuntu/)
+ - [Ubuntu 15.10 x86_64](http://moneroexamples.github.io/compile-monero-ubuntu-1510/)
+
 
 Monero source code compilation and setup are same as [here](http://moneroexamples.github.io/access-blockchain-in-cpp/).
 
