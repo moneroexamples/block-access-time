@@ -191,6 +191,8 @@ int main(int ac, const char* av[]) {
 
 - The resulted csv file can be seen [here](https://mega.nz/#!P4cWWTLK!Eb5m4q4f5Tx-5p5FNMwF7cv0ckvPTX5Hy5fqGn7VFm4).
 
+- Screenshot of the results is [here](http://i.imgur.com/BU0RBYs.png).
+
 - The plot of log of block access time against block number is [here](http://i.imgur.com/2xmAF0c.png).
 
 From the csv and data, it can be seen that there is very large
