@@ -134,6 +134,8 @@ int main(int ac, const char* av[]) {
 
         try
         {
+            // get block hash to be used to for the search
+            // in the next step
             block_id = core_storage.get_block_id_by_height(i);
         }
         catch (const exception& e)
