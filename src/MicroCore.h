@@ -46,6 +46,10 @@ namespace xmreg
         bool
         get_tx(const crypto::hash& tx_hash, transaction& tx);
 
+        uint64_t
+        get_block_reward(const block& blk);
+
+
 
         virtual ~MicroCore();
     };

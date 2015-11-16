@@ -144,7 +144,8 @@ int main(int ac, const char* av[]) {
     }
 
     // write the header
-    csv_os << "Height" << "Timestamp" << "Access_time" << "Size" << NEWLINE;
+    csv_os << "Height" << "Timestamp" << "Access_time" << "Size"
+           << "Hash" << "No_tx" << "Reward" << "Dificulty" << NEWLINE;
 
     for (uint64_t i = start_height; i < height; ++i) {
 
@@ -172,7 +173,12 @@ int main(int ac, const char* av[]) {
 
             // save measured data to the output csv file
             csv_os << i << xmreg::timestamp_to_str(blk.timestamp)
-                   << duration.count() << blk_size << NEWLINE;
+                   << duration.count() << blk_size
+                   << core_storage.get_block_id_by_height(i)
+                   << blk.tx_hashes.size()
+                   << cryptonote::print_money(mcore.get_block_reward(blk))
+                   << core_storage.get_db().get_block_difficulty(i)
+                   << NEWLINE;
         }
         catch (const exception& e)
         {

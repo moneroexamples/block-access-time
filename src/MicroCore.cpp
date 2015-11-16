@@ -137,6 +137,24 @@ namespace xmreg
 
 
 
+    /**
+     * Returns miner award for solving given block
+     */
+    uint64_t
+    MicroCore::get_block_reward(const block& blk)
+    {
+        uint64_t reward {0};
+
+        for (const tx_out& out: blk.miner_tx.vout)
+        {
+            reward += out.amount;
+        }
+
+        return reward;
+    }
+
+
+
 
 /**
      * De-initialized Blockchain.
