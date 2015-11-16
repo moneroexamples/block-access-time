@@ -207,36 +207,38 @@ Ubuntu 14.04 x86_64 and Ubuntu 15.10 x86_64.</p>
     cout &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span>End of program.<span class="pl-pds">"</span></span> &lt;&lt; endl;
 
     <span class="pl-k">return</span> <span class="pl-c1">0</span>;
-}```
+}</pre></div>
 
-## Results
+<h2>
+<a id="results" class="anchor" href="#results" aria-hidden="true"><span class="octicon octicon-link"></span></a>Results</h2>
 
-- The resulted csv file can be seen [here](https:<span class="pl-c">//mega.nz/#!P4cWWTLK!Eb5m4q4f5Tx-5p5FNMwF7cv0ckvPTX5Hy5fqGn7VFm4).</span>
+<ul>
+<li><p>The resulted csv file can be seen <a href="https://mega.nz/#!P4cWWTLK!Eb5m4q4f5Tx-5p5FNMwF7cv0ckvPTX5Hy5fqGn7VFm4">here</a>.</p></li>
+<li><p>The plot of log of block access time against block number is <a href="http://i.imgur.com/2xmAF0c.png">here</a>.</p></li>
+</ul>
 
-- The plot of log of block access time against block number is [here](http:<span class="pl-c">//i.imgur.com/2xmAF0c.png).</span>
-
-From the csv <span class="pl-k">and</span> data, it can be seen that there is very large
-concentration of very <span class="pl-k">long</span> times up to block of about 100k. This
+<p>From the csv and data, it can be seen that there is very large
+concentration of very long times up to block of about 100k. This
 results in very slow recovery of your deterministic wallet, when
-the blocks in <span class="pl-v">this</span> range are being scanned <span class="pl-k">for</span> your transactions.
+the blocks in this range are being scanned for your transactions.</p>
 
+<h2>
+<a id="compile-this-example" class="anchor" href="#compile-this-example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compile this example</h2>
 
-## Compile <span class="pl-v">this</span> example
-The dependencies are same as those <span class="pl-k">for</span> Monero, so I assume Monero compiles
-correctly. If so then to download <span class="pl-k">and</span> compile <span class="pl-v">this</span> example, the following
-steps can be executed:
+<p>The dependencies are same as those for Monero, so I assume Monero compiles
+correctly. If so then to download and compile this example, the following
+steps can be executed:</p>
 
-```bash
-# download the source code
-git clone https:<span class="pl-c">//github.com/moneroexamples/block-access-time</span>
+<div class="highlight highlight-source-shell"><pre><span class="pl-c"># download the source code</span>
+git clone https://github.com/moneroexamples/block-access-<span class="pl-k">time</span>
 
-# enter the downloaded sourced code folder
-cd block-access-time
+<span class="pl-c"># enter the downloaded sourced code folder</span>
+<span class="pl-c1">cd</span> block-access-<span class="pl-k">time</span>
 
-# create the makefile
-cmake .
+<span class="pl-c"># create the makefile</span>
+cmake <span class="pl-c1">.</span>
 
-# compile
+<span class="pl-c"># compile</span>
 make</pre></div>
 
 <p>After this, <code>blkaccesstime</code> executable file should be present in access-blockchain-in-cpp
