@@ -129,13 +129,28 @@ int main(int ac, const char* av[]) {
             cout << "Analysing block " << i <<  "/" << height << endl;
 
 
+
+        crypto::hash block_id;
+
+        try
+        {
+            block_id = core_storage.get_block_id_by_height(i);
+        }
+        catch (const exception& e)
+        {
+            cerr << e.what() << endl;
+            continue;
+        }
+
+
         cryptonote::block blk;
 
         try
         {
             // measure time of accessing ith block from the blockchain
             auto start = chrono::system_clock::now();
-            blk = core_storage.get_db().get_block_from_height(i);
+            //blk = core_storage.get_db().get_block_from_height(i); // <-- alternative, faster
+            core_storage.get_block_by_hash(block_id, blk);
             auto duration = chrono::duration_cast<chrono::nanoseconds>(chrono::system_clock::now() - start);
 
             // get block size
