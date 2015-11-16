@@ -119,7 +119,7 @@ int main(int ac, const char* av[]) {
            << "Hash" << "No_tx" << "Reward" << "Dificulty" << NEWLINE;
 
     // show command line output for everth i-th block
-    const uint64_t EVERY_ith_BLOCK {1000};
+    const uint64_t EVERY_ith_BLOCK {2000};
 
     for (uint64_t i = start_height; i < height; ++i) {
 
@@ -142,8 +142,7 @@ int main(int ac, const char* av[]) {
             size_t blk_size = core_storage.get_db().get_block_size(i);
 
             if (i % EVERY_ith_BLOCK == 0)
-                cout << i << " " << xmreg::timestamp_to_str(blk.timestamp)
-                     << " " << duration.count() << " " << blk_size << endl;
+                cout << " - " << "access time: " << duration.count() << " ns." << endl;
 
             // save measured data to the output csv file
             csv_os << i << xmreg::timestamp_to_str(blk.timestamp)
