@@ -37,8 +37,6 @@ int main(int ac, const char* av[]) {
     }
 
     // get other options
-    auto address_opt      = opts.get_option<string>("address");
-    auto viewkey_opt      = opts.get_option<string>("viewkey");
     auto start_height_opt = opts.get_option<size_t>("start-height");
     auto out_csv_file_opt = opts.get_option<string>("out-csv-file");
     auto bc_path_opt      = opts.get_option<string>("bc-path");
@@ -54,8 +52,6 @@ int main(int ac, const char* av[]) {
 
     // get the program command line options, or
     // some default values for quick check
-    string address_str   = address_opt ? *address_opt : "48daf1rG3hE1Txapcsxh6WXNe9MLNKtu7W7tKTivtSoVLHErYzvdcpea2nSTgGkz66RFP4GKVAsTV14v6G3oddBTHfxP6tU";
-    string viewkey_str   = viewkey_opt ? *viewkey_opt : "1ddabaa51cea5f6d9068728dc08c7ffaefe39a7a4b5f39fa8a976ecbe2cb520a";
     size_t start_height  = start_height_opt ? *start_height_opt : 0;
     string out_csv_file  = out_csv_file_opt ? *out_csv_file_opt : "/tmp/block_access_time.csv";
     path blockchain_path = bc_path_opt ? path(*bc_path_opt) : path(default_lmdb_dir);
@@ -107,33 +103,6 @@ int main(int ac, const char* av[]) {
     cout << "Current blockchain height: " << height << endl;
 
 
-    // parse string representing given monero address
-    cryptonote::account_public_address address;
-
-    if (!xmreg::parse_str_address(address_str,  address))
-    {
-        cerr << "Cant parse string address: " << address_str << endl;
-        return 1;
-    }
-
-
-    // parse string representing given private viewkey
-    crypto::secret_key prv_view_key;
-    if (!xmreg::parse_str_secret_key(viewkey_str, prv_view_key))
-    {
-        cerr << "Cant parse view key: " << viewkey_str << endl;
-        return 1;
-    }
-
-
-
-    // lets check our keys
-    cout << "\n"
-         << "address          : <" << xmreg::print_address(address) << ">\n"
-         << "private view key : "  << prv_view_key << "\n"
-         << endl;
-
-
     // output csv file
     csv::ofstream csv_os {out_csv_file.c_str()};
 
@@ -143,15 +112,20 @@ int main(int ac, const char* av[]) {
         return 1;
     }
 
-    // write the header
+    cout << "Csv file: " <<  out_csv_file << " opened for wrting results." << endl;
+
+    // write csv header
     csv_os << "Height" << "Timestamp" << "Access_time" << "Size"
            << "Hash" << "No_tx" << "Reward" << "Dificulty" << NEWLINE;
+
+    // show command line output for everth i-th block
+    const uint64_t EVERY_ith_BLOCK {1000};
 
     for (uint64_t i = start_height; i < height; ++i) {
 
         // show every nth output, just to give
         // a console some break
-        if (i % 2000 == 0)
+        if (i % EVERY_ith_BLOCK == 0)
             cout << "Analysing block " << i <<  "/" << height << endl;
 
 
@@ -167,7 +141,7 @@ int main(int ac, const char* av[]) {
             // get block size
             size_t blk_size = core_storage.get_db().get_block_size(i);
 
-            if (i % 2000 == 0)
+            if (i % EVERY_ith_BLOCK == 0)
                 cout << i << " " << xmreg::timestamp_to_str(blk.timestamp)
                      << " " << duration.count() << " " << blk_size << endl;
 
@@ -190,6 +164,7 @@ int main(int ac, const char* av[]) {
     } // for (uint64_t i = 0; i < height; ++i)
 
 
+    // colose the output csv file
     csv_os.flush();
     csv_os.close();
 

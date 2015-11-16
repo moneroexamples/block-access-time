@@ -21,10 +21,6 @@ namespace xmreg
         desc.add_options()
                 ("help,h", value<bool>()->default_value(false)->implicit_value(true),
                  "produce help message")
-                ("address,a", value<string>(),
-                 "monero address string")
-                ("viewkey,v", value<string>(),
-                 "private view key string")
                 ("start-height,t", value<size_t>(),
                  "private view key string")
                 ("out-csv-file,c", value<string>(),
