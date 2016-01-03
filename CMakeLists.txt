@@ -1,12 +1,15 @@
 cmake_minimum_required(VERSION 2.8)
 
 set(PROJECT_NAME
-        blkaccesstime)
+        blksinfo)
 
 project(${PROJECT_NAME})
 
 set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -std=c++11")
+
+set(CMAKE_INSTALL_PREFIX
+        /opt/bitmonero/)
 
 # find boost
 find_package(Boost COMPONENTS
@@ -99,3 +102,6 @@ target_link_libraries(${PROJECT_NAME}
         ${Boost_LIBRARIES}
         pthread
         unbound)
+
+install(TARGETS ${PROJECT_NAME}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
