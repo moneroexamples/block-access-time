@@ -120,7 +120,9 @@ int main(int ac, const char* av[]) {
 
     // write csv header
     csv_os << "Height" << "Timestamp" << "Access_time" << "Size"
-           << "Hash" << "No_tx" << "Reward" << "Dificulty" << NEWLINE;
+           << "Hash" << "No_tx" << "Reward"
+           << "Difficulty"
+           << NEWLINE;
 
     // show command line output for everth i-th block
     const uint64_t EVERY_ith_BLOCK {2000};
@@ -130,9 +132,9 @@ int main(int ac, const char* av[]) {
         // show every nth output, just to give
         // a console some break
         if (i % EVERY_ith_BLOCK == 0)
+        {
             cout << "Analysing block " << i <<  "/" << height << endl;
-
-
+        }
 
         crypto::hash block_id;
 
@@ -155,6 +157,7 @@ int main(int ac, const char* av[]) {
         {
             // measure time of accessing ith block from the blockchain
             auto start = chrono::system_clock::now();
+
             //blk = core_storage.get_db().get_block_from_height(i); // <-- alternative, faster
             core_storage.get_block_by_hash(block_id, blk);
             auto duration = chrono::duration_cast<chrono::nanoseconds>(chrono::system_clock::now() - start);
@@ -184,7 +187,7 @@ int main(int ac, const char* av[]) {
     } // for (uint64_t i = 0; i < height; ++i)
 
 
-    // colose the output csv file
+    // close the output csv file
     csv_os.flush();
     csv_os.close();
 
